@@ -9,9 +9,16 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.nav_header_main.view.*
+import com.google.firebase.internal.FirebaseAppHelper.getUid
+import com.google.firebase.auth.FirebaseUser
+
+
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -44,6 +51,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
+
+        val user = mAuth.currentUser
+        if (user != null) {
+            nav_view.getHeaderView(0).displayName.text = user.displayName
+            nav_view.getHeaderView(0).email.text = user.email
+        }
     }
 
     override fun onStart() {
