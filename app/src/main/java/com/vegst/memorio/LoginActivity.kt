@@ -40,19 +40,6 @@ class LoginActivity : AppCompatActivity() {
         email_sign_in_button.setOnClickListener { attemptLogin() }
     }
 
-    override fun onStart() {
-        super.onStart()
-        // Check if user is signed in (non-null) and update UI accordingly.
-        val currentUser = mAuth.currentUser
-        if (currentUser != null) {
-            println("logged in")
-        }
-        else {
-            println("not logged in")
-        }
-        //updateUI(currentUser); // TODO: Update UI here
-    }
-
     private fun attemptLogin() {
         if (mLoggingIn) {
             return
