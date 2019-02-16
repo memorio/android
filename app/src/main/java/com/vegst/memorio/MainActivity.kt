@@ -98,21 +98,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         var fragment : Fragment? = null
         when (item.itemId) {
-            R.id.nav_camera -> {
+            R.id.nav_placeholder -> {
                 fragment = PlaceholderFragment.newInstance()
-            }
-            R.id.nav_gallery -> {
-                fragment = PlaceholderFragment.newInstance()
-            }
-            R.id.nav_slideshow -> {
-                fragment = PlaceholderFragment.newInstance()
-            }
-            R.id.nav_manage -> {
-                fragment = PlaceholderFragment.newInstance()
-            }
-            R.id.nav_share -> {
-            }
-            R.id.nav_send -> {
             }
             R.id.nav_logout -> {
                 mAuth.signOut()
