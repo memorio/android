@@ -8,23 +8,11 @@ import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var mAuth: FirebaseAuth
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        mAuth = FirebaseAuth.getInstance()
     }
 
     override fun onStart() {
         super.onStart()
-        val currentUser = mAuth.currentUser
-        if (currentUser != null) {
-            println("already logged in")
-            startActivity(Intent(this, LoginActivity::class.java))
-        }
-        else {
-            startActivity(Intent(this, LoginActivity::class.java))
-        }
     }
 }

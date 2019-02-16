@@ -3,6 +3,7 @@ package com.vegst.memorio
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.TargetApi
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -142,13 +143,11 @@ class LoginActivity : AppCompatActivity() {
             showProgress(false)
 
             if (task.isSuccessful) {
-                val user = mAuth.currentUser
-                //updateUI(user) TODO: Update UI
+                startActivity(Intent(applicationContext, MainActivity::class.java))
                 finish()
             } else {
                 password.error = getString(R.string.error_incorrect_password)
                 password.requestFocus()
-                //updateUI(null) TODO: Update UI
             }
         }
     }
