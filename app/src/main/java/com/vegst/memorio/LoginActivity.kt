@@ -20,6 +20,13 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login.*
+import java.util.Arrays.asList
+import com.facebook.login.LoginManager
+import java.util.*
+import android.widget.Toast
+
+
+
 
 /**
  * A login screen that offers login via email/password.
@@ -28,7 +35,7 @@ class LoginActivity : AppCompatActivity() {
 
     private var mLoggingIn: Boolean = false
     private lateinit var mAuth: FirebaseAuth
-    private lateinit var mCallbackManager: CallbackManager
+    private lateinit var mFacebookCallbackManager: CallbackManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,9 +45,8 @@ class LoginActivity : AppCompatActivity() {
         buttonAnonoymousLogin.setOnClickListener { attemptLoginAnonymous() }
 
         // Initialize Facebook Login button
-        mCallbackManager = CallbackManager.Factory.create()
-        buttonFacebookLogin.setReadPermissions("email", "public_profile")
-        buttonFacebookLogin.registerCallback(mCallbackManager, object : FacebookCallback<LoginResult> {
+        mFacebookCallbackManager = CallbackManager.Factory.create()
+        LoginManager.getInstance().registerCallback(mFacebookCallbackManager, object : FacebookCallback<LoginResult> {
             override fun onSuccess(loginResult: LoginResult) {
                 attemptLoginFacebook(loginResult.accessToken)
             }
@@ -50,6 +56,10 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onError(error: FacebookException) {
             }
+        })
+        buttonFacebookLogin.setOnClickListener(View.OnClickListener {
+            LoginManager.getInstance()
+                .logInWithReadPermissions(this@LoginActivity, Arrays.asList("email", "public_profile"))
         })
 
 
@@ -132,6 +142,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        mCallbackManager.onActivityResult(requestCode, resultCode, data)
+        mFacebookCallbackManager.onActivityResult(requestCode, resultCode, data)
     }
 }
