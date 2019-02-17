@@ -8,12 +8,20 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
+import android.widget.Toast
+import com.facebook.AccessToken
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login.*
 
@@ -24,6 +32,7 @@ class LoginActivity : AppCompatActivity() {
 
     private var mLoggingIn: Boolean = false
     private lateinit var mAuth: FirebaseAuth
+    private lateinit var mCallbackManager: CallbackManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,16 +41,33 @@ class LoginActivity : AppCompatActivity() {
 
         password.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
             if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
-                attemptLogin()
+                attemptLoginEmail()
                 return@OnEditorActionListener true
             }
             false
         })
 
-        email_sign_in_button.setOnClickListener { attemptLogin() }
+
+        email_sign_in_button.setOnClickListener { attemptLoginEmail() }
+
+        // Initialize Facebook Login button
+        mCallbackManager = CallbackManager.Factory.create()
+        buttonFacebookLogin.setReadPermissions("email", "public_profile")
+        buttonFacebookLogin.registerCallback(mCallbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(loginResult: LoginResult) {
+                attemptLoginFacebook(loginResult.accessToken)
+            }
+
+            override fun onCancel() {
+            }
+
+            override fun onError(error: FacebookException) {
+            }
+        })
+
     }
 
-    private fun attemptLogin() {
+    private fun attemptLoginEmail() {
         if (mLoggingIn) {
             return
         }
@@ -87,6 +113,17 @@ class LoginActivity : AppCompatActivity() {
             mAuth.signInWithEmailAndPassword(emailStr, passwordStr)
                 .addOnCompleteListener(this, OnLoginListener())
         }
+    }
+
+    private fun attemptLoginFacebook(token: AccessToken) {
+
+        showProgress(true)
+        mLoggingIn = true
+
+        val credential = FacebookAuthProvider.getCredential(token.token)
+        mAuth.signInWithCredential(credential)
+            .addOnCompleteListener(OnLoginListener())
+
     }
 
     private fun isEmailValid(email: String): Boolean {
@@ -139,8 +176,6 @@ class LoginActivity : AppCompatActivity() {
 
     inner class OnLoginListener : OnCompleteListener<AuthResult> {
         override fun onComplete(task: Task<AuthResult>) {
-            mLoggingIn = false
-            showProgress(false)
 
             if (task.isSuccessful) {
                 startActivity(Intent(applicationContext, MainActivity::class.java))
@@ -148,7 +183,14 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 password.error = getString(R.string.error_incorrect_password)
                 password.requestFocus()
+                mLoggingIn = false
+                showProgress(false)
             }
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        mCallbackManager.onActivityResult(requestCode, resultCode, data)
     }
 }
