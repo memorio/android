@@ -10,11 +10,17 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.facebook.login.LoginManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.nav_header_main.view.*
 import com.vegst.memorio.ui.mainactivity.PlaceholderFragment
+import android.graphics.BitmapFactory
+import kotlinx.android.synthetic.main.nav_header_main.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -58,6 +64,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (user != null) {
             nav_view.getHeaderView(0).displayName.text = user.displayName
             nav_view.getHeaderView(0).email.text = user.email
+            if (user.photoUrl != null) {
+                doAsync {
+                    val newurl = URL(user.photoUrl.toString())
+                    val icon = BitmapFactory.decodeStream(newurl.openConnection().getInputStream())
+                    uiThread {
+                        photo.setImageBitmap(icon)
+                    }
+                }
+            }
         }
     }
 

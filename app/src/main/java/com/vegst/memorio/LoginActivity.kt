@@ -6,97 +6,114 @@ import android.annotation.TargetApi
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
-import android.text.TextUtils
+import android.util.Log
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.TextView
+import com.facebook.AccessToken
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login.*
+import java.util.Arrays.asList
+import com.facebook.login.LoginManager
+import java.util.*
+import android.widget.Toast
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+
 
 /**
  * A login screen that offers login via email/password.
  */
 class LoginActivity : AppCompatActivity() {
 
+    private val TAG = this::class.java.simpleName
+    private val RC_SIGN_IN: Int = 1
+
     private var mLoggingIn: Boolean = false
     private lateinit var mAuth: FirebaseAuth
+    private lateinit var mFacebookCallbackManager: CallbackManager
+    private lateinit var mGoogleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         mAuth = FirebaseAuth.getInstance()
 
-        password.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
-            if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
-                attemptLogin()
-                return@OnEditorActionListener true
-            }
-            false
+        buttonAnonoymousLogin.setOnClickListener { attemptLoginAnonymous() }
+
+        // Initialize Google login
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        buttonGoogleLogin.setOnClickListener(View.OnClickListener {
+            val signInIntent = mGoogleSignInClient.signInIntent
+            startActivityForResult(signInIntent, RC_SIGN_IN)
         })
 
-        email_sign_in_button.setOnClickListener { attemptLogin() }
+        // Initialize Facebook Login button
+        mFacebookCallbackManager = CallbackManager.Factory.create()
+        LoginManager.getInstance().registerCallback(mFacebookCallbackManager, object : FacebookCallback<LoginResult> {
+            override fun onSuccess(loginResult: LoginResult) {
+                attemptLoginFacebook(loginResult.accessToken)
+            }
+
+            override fun onCancel() {
+            }
+
+            override fun onError(error: FacebookException) {
+            }
+        })
+        buttonFacebookLogin.setOnClickListener(View.OnClickListener {
+            LoginManager.getInstance()
+                .logInWithReadPermissions(this@LoginActivity, Arrays.asList("email", "public_profile"))
+        })
     }
 
-    private fun attemptLogin() {
+    private fun attemptLoginAnonymous() {
         if (mLoggingIn) {
             return
         }
 
-        // Reset errors.
-        email.error = null
-        password.error = null
-
-        // Store values at the time of the login attempt.
-        val emailStr = email.text.toString()
-        val passwordStr = password.text.toString()
-
-        var cancel = false
-        var focusView: View? = null
-
-        // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(passwordStr) && !isPasswordValid(passwordStr)) {
-            password.error = getString(R.string.error_invalid_password)
-            focusView = password
-            cancel = true
-        }
-
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(emailStr)) {
-            email.error = getString(R.string.error_field_required)
-            focusView = email
-            cancel = true
-        } else if (!isEmailValid(emailStr)) {
-            email.error = getString(R.string.error_invalid_email)
-            focusView = email
-            cancel = true
-        }
-
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView?.requestFocus()
-        } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true)
-            mLoggingIn = true
-            mAuth.signInWithEmailAndPassword(emailStr, passwordStr)
-                .addOnCompleteListener(this, OnLoginListener())
-        }
+        showProgress(true)
+        mLoggingIn = true
+        mAuth.signInAnonymously()
+            .addOnCompleteListener(this, OnLoginListener())
     }
 
-    private fun isEmailValid(email: String): Boolean {
-        //TODO: Replace this with your own logic
-        return email.contains("@")
+    private fun attemptLoginGoogle(acct: GoogleSignInAccount) {
+
+        showProgress(true)
+        mLoggingIn = true
+
+        val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
+        mAuth.signInWithCredential(credential)
+            .addOnCompleteListener(OnLoginListener())
     }
 
-    private fun isPasswordValid(password: String): Boolean {
-        //TODO: Replace this with your own logic
-        return password.length > 4
+
+    private fun attemptLoginFacebook(token: AccessToken) {
+
+        showProgress(true)
+        mLoggingIn = true
+
+        val credential = FacebookAuthProvider.getCredential(token.token)
+        mAuth.signInWithCredential(credential)
+            .addOnCompleteListener(OnLoginListener())
+
     }
 
     /**
@@ -139,15 +156,29 @@ class LoginActivity : AppCompatActivity() {
 
     inner class OnLoginListener : OnCompleteListener<AuthResult> {
         override fun onComplete(task: Task<AuthResult>) {
-            mLoggingIn = false
-            showProgress(false)
 
             if (task.isSuccessful) {
                 startActivity(Intent(applicationContext, MainActivity::class.java))
                 finish()
             } else {
-                password.error = getString(R.string.error_incorrect_password)
-                password.requestFocus()
+                Snackbar.make(coordinator, "Login failed", Snackbar.LENGTH_SHORT).show();
+                mLoggingIn = false
+                showProgress(false)
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        mFacebookCallbackManager.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                attemptLoginGoogle(account!!)
+            } catch (e: ApiException) {
+                Log.w(TAG, "Google sign in failed", e)
             }
         }
     }

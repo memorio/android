@@ -11,6 +11,16 @@
     <style name="AppTheme.Start" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@drawable/background_start</item>
     </style>
+
+    <style name="AppTheme.Dark">
+        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorPrimary</item>
+    </style>
+    <style name="AppTheme.Dark.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
