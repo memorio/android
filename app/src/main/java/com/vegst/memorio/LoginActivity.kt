@@ -50,6 +50,8 @@ class LoginActivity : AppCompatActivity() {
 
         email_sign_in_button.setOnClickListener { attemptLoginEmail() }
 
+        buttonAnonoymousLogin.setOnClickListener { attemptLoginAnonymous() }
+        
         // Initialize Facebook Login button
         mCallbackManager = CallbackManager.Factory.create()
         buttonFacebookLogin.setReadPermissions("email", "public_profile")
@@ -64,6 +66,7 @@ class LoginActivity : AppCompatActivity() {
             override fun onError(error: FacebookException) {
             }
         })
+
 
     }
 
@@ -114,6 +117,18 @@ class LoginActivity : AppCompatActivity() {
                 .addOnCompleteListener(this, OnLoginListener())
         }
     }
+
+    private fun attemptLoginAnonymous() {
+        if (mLoggingIn) {
+            return
+        }
+
+        showProgress(true)
+        mLoggingIn = true
+        mAuth.signInAnonymously()
+            .addOnCompleteListener(this, OnLoginListener())
+    }
+
 
     private fun attemptLoginFacebook(token: AccessToken) {
 
