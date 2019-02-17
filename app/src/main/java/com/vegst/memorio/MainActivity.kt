@@ -117,7 +117,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 fragment = PlaceholderFragment.newInstance()
             }
             R.id.nav_logout -> {
-                LoginManager.getInstance().logOut();
                 mAuth.signOut()
             }
         }
